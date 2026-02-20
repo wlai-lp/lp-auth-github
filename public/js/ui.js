@@ -9,6 +9,12 @@ const router = {
   "/login": () => login(),
 };
 
+const getRouteFromLocation = () => {
+  const hash = window.location.hash || "#/";
+  const route = hash.startsWith("#") ? hash.slice(1) : hash;
+  return route || "/";
+};
+
 //Declare helper functions
 
 /**
@@ -136,5 +142,12 @@ const updateUI = async () => {
 window.onpopstate = (e) => {
   if (e.state && e.state.url && router[e.state.url]) {
     showContentFromUrl(e.state.url);
+  }
+};
+
+window.onhashchange = () => {
+  const route = getRouteFromLocation();
+  if (!showContentFromUrl(route)) {
+    window.location.hash = "#/";
   }
 };

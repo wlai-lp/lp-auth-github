@@ -10,7 +10,7 @@ const login = async (targetUrl) => {
 
     const options = {
       authorizationParams: {
-        redirect_uri: window.location.origin
+        redirect_uri: window.location.origin + window.location.pathname
       }
     };
 
@@ -32,7 +32,7 @@ const logout = async () => {
     console.log("Logging out");
     await auth0Client.logout({
       logoutParams: {
-        returnTo: window.location.origin
+        returnTo: window.location.origin + window.location.pathname
       }
     });
   } catch (err) {
@@ -43,7 +43,7 @@ const logout = async () => {
 /**
  * Retrieves the auth configuration from the server
  */
-const fetchAuthConfig = () => fetch("/auth_config.json");
+const fetchAuthConfig = () => fetch("./public/auth_config.json");
 
 /**
  * Initializes the Auth0 client
@@ -73,26 +73,34 @@ const requireAuth = async (fn, targetUrl) => {
   return login(targetUrl);
 };
 
+const normalizeRoute = (href) => {
+  if (!href) return "/";
+  if (href.startsWith("#")) return href.slice(1) || "/";
+  return href;
+};
+
 // Will run when page finishes loading
 window.onload = async () => {
   await configureClient();
 
-  // If unable to parse the history hash, default to the root URL
-  if (!showContentFromUrl(window.location.pathname)) {
+  const initialRoute = getRouteFromLocation();
+
+  if (!showContentFromUrl(initialRoute)) {
     showContentFromUrl("/");
-    window.history.replaceState({ url: "/" }, {}, "/");
+    window.location.hash = "#/";
   }
 
   const bodyElement = document.getElementsByTagName("body")[0];
 
-  // Listen out for clicks on any hyperlink that navigates to a #/ URL
   bodyElement.addEventListener("click", (e) => {
-    if (isRouteLink(e.target)) {
-      const url = e.target.getAttribute("href");
+    const target = e.target instanceof Element ? e.target : null;
+    const link = target ? target.closest("a.route-link") : null;
+    if (link && isRouteLink(link)) {
+      const url = normalizeRoute(link.getAttribute("href"));
 
       if (showContentFromUrl(url)) {
         e.preventDefault();
-        window.history.pushState({ url }, {}, url);
+        window.location.hash = `#${url}`;
       }
     }
   });
@@ -101,7 +109,6 @@ window.onload = async () => {
 
   if (isAuthenticated) {
     console.log("> User is authenticated");
-    window.history.replaceState({}, document.title, window.location.pathname);
     updateUI();
     return;
   }
@@ -113,10 +120,12 @@ window.onload = async () => {
 
   if (shouldParseResult) {
     console.log("> Parsing redirect");
+    let targetUrl = "/";
     try {
       const result = await auth0Client.handleRedirectCallback();
 
       if (result.appState && result.appState.targetUrl) {
+        targetUrl = result.appState.targetUrl;
         showContentFromUrl(result.appState.targetUrl);
       }
 
@@ -125,7 +134,7 @@ window.onload = async () => {
       console.log("Error parsing redirect:", err);
     }
 
-    window.history.replaceState({}, document.title, "/");
+    window.location.hash = `#${targetUrl}`;
   }
 
   updateUI();
