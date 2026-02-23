@@ -66,7 +66,7 @@ const showContent = (id) => {
     console.log("show lp chat button");
     // lpTag.sdes = lpTag.sdes || {};
     // // lpTag.section = ["wat-live", "english"];
-    // lpTag.section = ["development"];
+    // lpTag.section = ["auth"];
     // lpTag.sdes.push({
     //   type: "cart", //mandatory
     //   total: 11.7, // total value of the cart affter discount

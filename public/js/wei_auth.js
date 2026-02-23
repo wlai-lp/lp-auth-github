@@ -65,5 +65,5 @@ $.ajax(settings).done(function (response) {
   token = response.access_token;
 });
 
-lpTag.section = ["development"];
+lpTag.section = ["auth"];
 console.log("push section");
